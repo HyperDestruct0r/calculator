@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="A compact graphing calculator with fractions, history, keyboard input, and memory.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <title>Custom Graphing Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <div class="eyebrow">CUSTOM TOOL</div>
+        <h1>Graphing Calculator</h1>
+      </div>
+      <button id="themeBtn" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    </header>
+
+    <section class="display-panel">
+      <label for="expression">Expression</label>
+      <input id="expression" autocomplete="off" spellcheck="false" placeholder="e.g. 2x^2 - 3x + 1">
+      <div class="display-row">
+        <div id="result" aria-live="polite">Enter an expression to evaluate or graph.</div>
+        <button id="graphBtn" class="primary">Graph</button>
+      </div>
+      <div class="hint">Enter = calculate · Shift+Enter = graph · use x for graphing</div>
+    </section>
+
+    <section class="graph-panel">
+      <div class="section-heading">
+        <strong>Graph</strong>
+        <div class="graph-actions">
+          <button id="resetView" title="Reset view">Reset</button>
+          <button id="zoomOut" title="Zoom out">−</button>
+          <button id="zoomIn" title="Zoom in">+</button>
+        </div>
+      </div>
+      <canvas id="graph" width="700" height="390" aria-label="Function graph"></canvas>
+      <div class="graph-footer">
+        <span id="graphLabel">y = —</span>
+        <span>Drag to pan</span>
+      </div>
+    </section>
+
+    <section class="keypad" aria-label="Calculator keypad">
+      <button data-insert="sin(">sin</button><button data-insert="cos(">cos</button><button data-insert="tan(">tan</button><button data-insert="sqrt(">√</button><button data-insert="^">xʸ</button>
+      <button data-insert="(">(</button><button data-insert=")">)</button><button data-insert="pi">π</button><button data-insert="e">e</button><button data-insert="/">÷</button>
+      <button data-insert="7">7</button><button data-insert="8">8</button><button data-insert="9">9</button><button data-insert="*">×</button><button data-insert="log(">log</button>
+      <button data-insert="4">4</button><button data-insert="5">5</button><button data-insert="6">6</button><button data-insert="-">−</button><button data-insert="ln(">ln</button>
+      <button data-insert="1">1</button><button data-insert="2">2</button><button data-insert="3">3</button><button data-insert="+">+</button><button data-insert="abs(">abs</button>
+      <button data-insert="0" class="wide">0</button><button data-insert=".">.</button><button id="backspace">⌫</button><button id="clear">AC</button><button id="equals" class="primary">=</button>
+    </section>
+
+    <section class="utility-grid">
+      <div class="utility-panel">
+        <div class="section-heading"><strong>Memory</strong><span id="memoryValue">M: 0</span></div>
+        <div class="memory-buttons">
+          <button id="mc">MC</button><button id="mr">MR</button><button id="mplus">M+</button><button id="mminus">M−</button><button id="ms">MS</button>
+        </div>
+      </div>
+      <div class="utility-panel">
+        <div class="section-heading"><strong>History</strong><button id="clearHistory" class="text-btn">Clear</button></div>
+        <ol id="history" class="history"><li class="empty">Your calculations will appear here.</li></ol>
+      </div>
+    </section>
+    <footer>Fractions are shown when a result is close to a simple rational number. Trigonometry uses radians. Your history and memory stay on this device.</footer>
+  </main>
+  <script src="calculator.js"></script>
+  <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));</script>
+</body>
+</html>

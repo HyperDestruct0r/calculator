@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Custom Graphing Calculator",
+  "version": "1.0.0",
+  "description": "A compact graphing calculator with fractions, history, keyboard input, and memory.",
+  "action": {
+    "default_title": "Graphing Calculator",
+    "default_popup": "popup.html"
+  }
+}
