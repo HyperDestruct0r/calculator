@@ -1,22 +1,40 @@
-# Custom Graphing Calculator — PWA
+# Graphing Calculator — TI-84-style PWA (v2)
 
-This is the standalone Progressive Web App edition of the calculator.
+A keypad-driven graphing calculator that runs entirely in the browser. No build step, no backend,
+no external requests. Works offline after the first load and installs as an app.
 
 ## Publish with GitHub Pages
-1. Create a repository for the calculator, or use a folder in an existing repository.
-2. Upload the **contents** of this folder (not the outer folder itself) to the repository location you want to publish.
-3. In GitHub, open **Settings → Pages** and configure Pages for the branch/folder containing `index.html` (usually `main` and `/root`).
-4. This project currently uses `popup.html` as its app page. Rename `popup.html` to `index.html` before publishing, or change the Pages entry point accordingly. The recommended option is to rename it to `index.html`.
-5. Open the published HTTPS URL in Chrome.
-6. If Chrome offers **Install app** in the address bar or menu, use it. If not, check the three-dot menu for **Cast, save, and share → Install page as app** or **Create shortcut** (wording varies).
+1. Upload the **contents** of this folder (not the outer folder) to your repository (root or a subfolder).
+2. **Settings → Pages**: choose the branch/folder that contains `index.html`.
+3. Open the HTTPS URL, then use *Install app* (Chrome menu / address bar) if offered.
+All paths are relative, so it works under `https://user.github.io/repo/`.
+
+`index.html` is now the entry point (no renaming needed). `popup.html` is kept for the Chrome-extension
+build (`manifest.json`) and is identical apart from a fixed popup size.
+
+## Modes (Alt+1…5, or Ctrl+←/→)
+CALC · GRAPH · TABLE · HISTORY · SETTINGS. The app always opens on CALC.
 
 ## Features
-- Graphs one expression in `x` at a time.
-- Pan by dragging and zoom with the wheel or buttons.
-- Fractions are approximated for evaluated results.
-- Calculation history and memory are saved in this browser using localStorage.
-- Service worker caches app files for offline use after the first successful visit.
-- Trigonometry uses radians.
+- 2nd key (also `` ` `` on a keyboard) with secondary labels on keys; auto-cancels after one key, cancel with 2nd/Esc.
+- RAD/DEG toggle, FRAC/DEC toggle (F↔D), mixed numbers (2nd F↔D), scientific/engineering/fixed decimals.
+- Safe parser (no `eval`/`Function`): implicit multiplication, `x^2`, factorial, %, °, lists `{1,2,3}`,
+  `nDeriv(f,x,a)`, `fnInt(f,x,a,b)`, nCr/nPr, mod/gcd/lcm, min/max/sum/mean, log(x,b), root(n,x), hyperbolics.
+- Token editor with cursor, ▲/▼ entry recall, 2nd+ENTER = ENTRY, Ans, auto-Ans on a leading operator, live result preview.
+- GRAPH: up to 10 functions (toggle, colour, remove), drag-pan, wheel/pinch zoom, Reset/Trig/Fit/Square,
+  trace, zeros, min/max, intersections, derivative + tangent, shaded integral.
+- TABLE: start/end/step (expressions allowed), one function or all enabled.
+- HISTORY (200 entries, reuse/replay) and MEMORY (MC MR M+ M− MS) persist in localStorage.
 
-## Important
-A school-managed Chromebook may restrict PWA installation too. This project does not bypass administrator controls. If installation is blocked, you can still use the hosted calculator as a normal website if the site is allowed.
+## Maintenance
+Bump `CACHE_VERSION` in `sw.js` whenever you change any file, so installed copies update.
+Run the maths tests with `node tests/engine.test.mjs`.
+
+## Migration from v1
+Automatic: on first run v2 imports the old `cgcalc-memory` and `cgcalc-history` keys. Replace all files,
+including `sw.js`; the old cache is deleted on activation. If a device shows the old UI, close all tabs/app
+windows once or hard-reload.
+
+## Known limits
+Y= functions cannot reference each other (no `Y1(x)`); no complex numbers; no polar/parametric graphs;
+no STO▸ variables other than Ans and memory. Installing is blocked on managed Chromebooks.
