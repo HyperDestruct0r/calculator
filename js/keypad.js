@@ -21,7 +21,7 @@ export const MEMORY_KEYS = [
 
 export const KEYS = [
   K("2nd", C("second"), "", null, "k-second", "Second function"),
-  K("x", T("x"), "mod", F("mod"), "k-var", "Variable x"),
+  K("X,T,θ,n", C("xvar"), "mod", F("mod"), "k-var", "Graph variable (x, t, θ or n)"),
   K("MATH", C("math"), "", null, "k-fn", "More functions"),
   K("◀", C("left"), "|◀", C("home"), "k-arrow", "Cursor left"),
   K("▶", C("right"), "▶|", C("end"), "k-arrow", "Cursor right"),
@@ -45,7 +45,7 @@ export const KEYS = [
   K("F↔D", C("fd"), "mixed", C("mixed"), "k-fn", "Fraction / decimal"),
 
   K("π", T("pi", "π", { operand: true }), "°", T("°", "°"), "k-fn"),
-  K("e", T("e"), "", null, "k-fn", "Euler's number"),
+  K("e", T("e"), "STO▸", T("→", "→"), "k-fn", "Euler's number"),
   K("(", T("("), "{", T("{"), "k-fn"),
   K(")", T(")"), "}", T("}"), "k-fn"),
   K(",", T(","), "ᴇ", T("E", "ᴇ"), "k-fn", "Comma"),
@@ -57,10 +57,10 @@ export const KEYS = [
   K("×", op("*", "×"), "", null, "k-op", "Multiply"), K("AC", C("clear"), "", null, "k-del", "Clear"),
 
   K("1", num(1), "", null, "k-num"), K("2", num(2), "", null, "k-num"), K("3", num(3), "", null, "k-num"),
-  K("−", op("-", "−"), "", null, "k-op", "Subtract"), K("ANS", T("ans", "Ans", { operand: true, binop: true }), "", null, "k-fn", "Last answer"),
+  K("−", op("-", "−"), "", null, "k-op", "Subtract"), K("ANS", T("ans", "Ans", { operand: true, binop: true }), "SOLVE", C("solver"), "k-fn", "Last answer"),
 
-  K("0", num(0), "", null, "k-num"), K(".", T("."), "", null, "k-num", "Decimal point"),
-  K("(−)", T("-", "⁻", { neg: true }), "", null, "k-fn", "Negative sign"),
+  K("0", num(0), "VARS", C("vars"), "k-num"), K(".", T("."), "i", T("i"), "k-num", "Decimal point"),
+  K("(−)", T("-", "⁻", { neg: true }), "CMPLX", C("cmplx"), "k-fn", "Negative sign"),
   K("+", op("+", "+"), "", null, "k-op", "Add"), K("ENTER", C("enter"), "ENTRY", C("entry"), "k-enter", "Enter"),
 ];
 

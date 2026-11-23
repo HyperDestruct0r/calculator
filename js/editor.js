@@ -6,9 +6,10 @@ const DISPLAY = {
   "asin(": "sin⁻¹(", "acos(": "cos⁻¹(", "atan(": "tan⁻¹(", "asinh(": "sinh⁻¹(", "acosh(": "cosh⁻¹(", "atanh(": "tanh⁻¹(",
   "sqrt(": "√(", "cbrt(": "∛(", "root(": "ˣ√(", "ncr(": "nCr(", "npr(": "nPr(", "nderiv(": "nDeriv(", "fnint(": "fnInt(",
   "pi": "π", "ans": "Ans", "*": "×", "/": "÷", "^(2)": "²", "^(3)": "³", "^(-1)": "⁻¹", "E": "ᴇ",
+  "theta": "θ", "tau": "τ", "phi": "φ", "euler": "γ", "<=": "≤", ">=": "≥", "ipart(": "iPart(", "fpart(": "fPart(", "polyroots(": "polyRoots(",
 };
 const MULTI = [...new Set([
-  ...FUNCTION_NAMES.map((n) => n + "("), "10^(", "e^(", "^(2)", "^(3)", "^(-1)", "pi", "ans",
+  ...FUNCTION_NAMES.map((n) => n + "("), "10^(", "e^(", "^(2)", "^(3)", "^(-1)", "pi", "ans", "theta", "tau", "phi", "euler", "<=", ">=",
 ])].sort((a, b) => b.length - a.length);
 
 export const FN_TOKEN_NAMES = FUNCTION_NAMES.slice().sort((a, b) => b.length - a.length);
@@ -17,15 +18,15 @@ export const tok = (t, d, extra = {}) => ({ t, d: d ?? DISPLAY[t] ?? t, ...extra
 export const fnTok = (name, d) => tok(name + "(", d);
 export const ANS = tok("ans", "Ans", { operand: true });
 
-const OPERAND_END = new Set([")", "}", "pi", "e", "x", "ans", "!", "%", "°", "^(2)", "^(3)", "^(-1)", "."]);
+const OPERAND_END = new Set([")", "}", "pi", "e", "i", "x", "ans", "theta", "tau", "phi", "euler", "!", "%", "°", "^(2)", "^(3)", "^(-1)", "."]);
 export function endsOperand(t) {
-  return !!t && (/^\d$/.test(t.t) || OPERAND_END.has(t.t));
+  return !!t && (/^[\da-z]$/.test(t.t) || OPERAND_END.has(t.t));
 }
 
 /** Convert canonical text (as produced by serialize) back into tokens. */
 export function textToTokens(text) {
   const out = [];
-  const s = String(text).replace(/\s+/g, "");
+  const s = String(text).replace(/\s+/g, "").replace(/θ/g, "theta").replace(/τ/g, "tau").replace(/φ/g, "phi").replace(/≤/g, "<=").replace(/≥/g, ">=").replace(/->/g, "→");
   let i = 0;
   while (i < s.length) {
     const rest = s.slice(i).toLowerCase();
@@ -38,7 +39,7 @@ export function textToTokens(text) {
       out.push(endsOperand(prev) ? tok("-", "−", { binop: true }) : tok("-", "⁻", { neg: true }));
     } else if (c === "*" || c === "/" || c === "+" || c === "^") out.push(tok(c, undefined, { binop: true }));
     else if (/[a-z]/i.test(c)) out.push(tok(c.toLowerCase()));
-    else if (/[\d.,()!{}%°]/.test(c)) out.push(tok(c));
+    else if (/[\d.,()!{}%°<>=→]/.test(c)) out.push(tok(c));
     i++;
   }
   return out;

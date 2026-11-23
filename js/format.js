@@ -1,5 +1,6 @@
 // Number / result formatting (decimal, scientific, engineering, fractions, mixed numbers).
-import { toFractionParts } from "./engine.js";
+import { toFractionParts } from "./realmath.js";
+import { isComplex } from "./complex.js";
 
 function trimZeros(s) {
   return s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s;
@@ -64,7 +65,25 @@ function fracHtml(f, mixed) {
  * returns { text, html, altText } — text is plain; html may contain a stacked fraction.
  * altText is the other representation (decimal when fraction is primary, and vice versa).
  */
+/** Plain-text form of a complex number: "3+4i" (rect) or "5(cos 53.13° + i sin 53.13°)" (polar). */
+export function formatComplex(z, s = {}, mode = s.complex) {
+  const mag = Math.hypot(z.re, z.im);
+  // parts that are below double-precision noise relative to |z| are display noise, not information
+  const re = Math.abs(z.re) < 1e-14 * mag ? 0 : z.re, im = Math.abs(z.im) < 1e-14 * mag ? 0 : z.im;
+  if (im === 0) return formatNumber(re, s);
+  if (mode === "polar") {
+    const deg = s.angle === "deg";
+    const th = Math.atan2(im, re) * (deg ? 180 / Math.PI : 1);
+    const t = formatNumber(th, { ...s, digits: s.digits }) + (deg ? "°" : "");
+    return `${formatNumber(mag, s)}(cos ${t} + i sin ${t})`;
+  }
+  const a = Math.abs(im), body = a === 1 ? "i" : formatNumber(a, s) + "i";
+  if (re === 0) return (im < 0 ? "−" : "") + body;
+  return `${formatNumber(re, s)} ${im < 0 ? "−" : "+"} ${body}`;
+}
+
 export function formatValue(v, s = {}) {
+  if (isComplex(v)) { const t = formatComplex(v, s); return { text: t, html: escapeHtml(t), altText: "" }; }
   if (Array.isArray(v)) {
     const parts = v.map((n) => formatValue(n, { ...s, frac: "dec" }).text);
     const t = "{" + parts.join(", ") + "}";
@@ -87,6 +106,8 @@ export function escapeHtml(s) {
 /** Text that can be re-entered into the editor (full precision). */
 export function numberToEntryText(v) {
   if (Array.isArray(v)) return "{" + v.map(numberToEntryText).join(",") + "}";
-  let t = String(Number(v.toPrecision(15)));
+  const num = (x) => String(Number(x.toPrecision(15))).replace("e", "E"); // "E" is what the editor expects for ×10ⁿ
+  if (isComplex(v)) return `(${num(v.re)}${v.im < 0 ? "-" : "+"}${num(Math.abs(v.im))}i)`;
+  const t = num(v);
   return v < 0 ? `(${t})` : t;
 }

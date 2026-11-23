@@ -2,7 +2,8 @@
 import { load, save, flush } from "./store.js";
 import { Editor, tok, ANS, endsOperand, textToTokens } from "./editor.js";
 import { buildKeypad } from "./keypad.js";
-import { evaluate } from "./engine.js";
+import { evaluate, run } from "./engine.js";
+import { openMathSheet, openSolverSheet, openVarsSheet, openPromptSheet } from "./sheets.js";
 import { formatValue, formatNumber, numberToEntryText } from "./format.js";
 import { createCalcView } from "./calc.js";
 import { createGraphView } from "./graph.js";
@@ -26,7 +27,19 @@ const app = {
   views: {},
 
   save() { save(state); },
-  evalOpts() { return { angle: state.settings.angle, ans: state.ans }; },
+  evalOpts() { return { angle: state.settings.angle, ans: state.ans, vars: state.vars, complex: state.settings.complex !== "real" }; },
+  /** Run one CALC line (expression or store). Applies a store to the variables. */
+  runLine(text) {
+    const r = run(text, app.evalOpts());
+    if (r.kind === "assign") { state.vars[r.name] = r.value; app.varsChanged(); }
+    return r;
+  },
+  varsChanged() {
+    app.save();
+    if (app.views.graph) app.views.graph.refresh();
+    if (app.views.table) app.views.table.refresh();
+  },
+  promptValues(title, fields, cb) { openPromptSheet(app, title, fields, cb); },
   fmt(v) { return formatValue(v, state.settings); },
   isStacked() { return !wideMQ.matches; },
   canInstall() { return !!installEvent; },
@@ -143,6 +156,7 @@ const app = {
         if (endsOperand(ed.prev())) return app.insertToken(tok("-", "−", { binop: true }));
         return ed.insert(tok("-", "⁻", { neg: true }));
       case "(": if (!ed.mergeFunctionName()) ed.insert(tok("(")); return;
+      case "<": case ">": case "=": case "→": return ed.insert(tok(c));
       case ")": case ",": case "!": case "%": case "{": case "}": case "°": return ed.insert(tok(c));
       default: if (/^[a-zA-Z]$/.test(c)) ed.insert(tok(c.toLowerCase()));
     }
@@ -164,7 +178,11 @@ const app = {
       case "up": case "down": if (v.arrow) v.arrow(cmd, ed); break;
       case "fd": state.settings.frac = state.settings.frac === "frac" ? "dec" : "frac"; app.applySettings(); app.toast(state.settings.frac === "frac" ? "Fractions" : "Decimals"); break;
       case "mixed": state.settings.mixed = !state.settings.mixed; state.settings.frac = "frac"; app.applySettings(); app.toast(state.settings.mixed ? "Mixed numbers" : "Improper fractions"); break;
-      case "math": app.openMathMenu(); break;
+      case "math": openMathSheet(app, "MATH"); break;
+      case "cmplx": openMathSheet(app, "CMPLX"); break;
+      case "solver": openSolverSheet(app); break;
+      case "vars": openVarsSheet(app); break;
+      case "xvar": { const e = app.ensureEditor(); if (e) app.insertToken(app.mode === "graph" ? app.views.graph.varToken() : tok("x")); break; }
       case "mc": state.memory = 0; app.memoryChanged("Memory cleared"); break;
       case "mr": {
         const e = app.ensureEditor();
@@ -204,38 +222,13 @@ const app = {
   memoryChanged(msg) { app.refreshStatus(); app.save(); app.toast(msg); },
 
   // ----- dialogs -----
-  openMathMenu() {
-    const items = [
-      ["nDeriv(", "nDeriv(", "derivative at a point"], ["fnInt(", "fnInt(", "definite integral"],
-      ["nCr(", "nCr(", "combinations"], ["nPr(", "nPr(", "permutations"],
-      ["mod(", "mod(", "modulo"], ["gcd(", "gcd(", "greatest common divisor"], ["lcm(", "lcm(", "least common multiple"],
-      ["min(", "min(", "list or values"], ["max(", "max(", "list or values"], ["sum(", "sum(", "of a list"], ["mean(", "mean(", "of a list"],
-      ["round(", "round(", "round(x, digits)"], ["floor(", "floor(", ""], ["ceil(", "ceil(", ""], ["int(", "int(", "truncate"], ["sign(", "sign(", ""],
-      ["log(x,b)", "log(", "log base b"], ["ˣ√", "root(", "root(n, x)"], ["sinh(", "sinh(", ""], ["cosh(", "cosh(", ""], ["tanh(", "tanh(", ""],
-      ["°", "°", "degrees"], ["%", "%", "percent"], ["ᴇ", "E", "×10ⁿ"], ["{ }", "{", "list"],
-    ];
-    const sheet = document.createElement("div");
-    sheet.className = "sheet";
-    sheet.innerHTML = `<h2>MATH</h2><div class="menu-grid">${items.map(([l, , n], i) => `<button type="button" data-i="${i}">${l}${n ? `<small>${n}</small>` : ""}</button>`).join("")}</div><button type="button" class="close">Close</button>`;
-    sheet.addEventListener("click", (e) => {
-      const b = e.target.closest("button");
-      if (!b) return;
-      if (b.classList.contains("close")) { app.closeOverlay(); return; }
-      const [, t] = items[Number(b.dataset.i)];
-      app.closeOverlay();
-      if (t.endsWith("(")) app.insertToken(tok(t.toLowerCase(), t === "log(" ? "log(" : undefined));
-      else if (t === "{") { const ed = app.ensureEditor(); if (ed) ed.insert([tok("{"), tok("}")]), ed.left(); }
-      else app.typeChar(t === "E" ? "E" : t);
-    });
-    app.openOverlay(sheet);
-  },
   openHelp() {
     const rows = [
       ["0-9 . + - * / ^ ( )", "Type numbers and operators"], ["sin( cos( sqrt( …", "Type function names; “(” completes them"],
       ["Enter  or  =", "Evaluate (CALC) / next field (GRAPH, TABLE)"], ["Shift+Enter", "CALC: plot expression in Y="],
       ["Backspace  ·  Delete", "Delete before / after cursor"], ["← → Home End", "Move cursor (or trace in GRAPH)"],
       ["↑ ↓", "Recall previous entries (CALC) · switch field / function"], ["Esc", "Cancel 2nd, close menus, or clear the line"],
-      ["` (backtick)", "Toggle the 2nd key"], ["Alt+1 … Alt+5", "CALC · GRAPH · TABLE · HISTORY · SETTINGS"],
+      ["` (backtick)", "Toggle the 2nd key"], ["a=5  ·  5 → a", "Store a value in a letter (CALC)"], ["2nd + . · 2nd + (−) · 2nd + ANS · 2nd + 0", "i · CMPLX menu · SOLVE · VARS"], ["Alt+1 … Alt+5", "CALC · GRAPH · TABLE · HISTORY · SETTINGS"],
       ["Ctrl+← / Ctrl+→", "Previous / next mode"], ["Ctrl+V", "Paste an expression"],
     ];
     const sheet = document.createElement("div");
@@ -272,7 +265,12 @@ function onKeyDown(e) {
   if (typed) {
     stop();
     if (app.second) app.setSecond(false);
-    if (k === "=") { app.command("enter"); return; }
+    if (k === "=") {
+      const ed = app.active;
+      // "=" evaluates in CALC, but is a relation in graph editors and after a lone variable letter (a=5)
+      if (ed && (app.mode === "graph" || (app.mode === "calc" && /^[a-z]$/.test(ed.text())))) { ed.insert(tok("=")); return; }
+      app.command("enter"); return;
+    }
     if (entryMode) app.setMode("calc");
     app.typeChar(k);
     return;

@@ -1,7 +1,6 @@
 // HISTORY screen: persistent log with reuse / replay.
 import { el } from "./dom.js";
 import { textToDisplay, textToTokens } from "./editor.js";
-import { evaluate } from "./engine.js";
 import { escapeHtml, numberToEntryText } from "./format.js";
 
 export function createHistoryView(app) {
@@ -9,7 +8,7 @@ export function createHistoryView(app) {
   const root = el("section", "view hist");
   root.innerHTML = `<div class="bar"><h2>History</h2><button type="button" class="lcd-btn danger" data-clear>Clear history</button></div><div class="list" style="display:grid;gap:8px"></div>`;
   const list = root.querySelector(".list");
-  const TRIG = /sin|cos|tan/;
+  const TRIG = /sin|cos|tan|arg|polar|angle|°/;
 
   function render() {
     if (!st.history.length) { list.innerHTML = '<div class="empty-note">No calculations yet. Results you evaluate in CALC are saved here.</div>'; return; }
@@ -39,7 +38,7 @@ export function createHistoryView(app) {
       app.setMode("calc"); app.views.calc.insertText(numberToEntryText(h.value));
     } else if (act === "replay") {
       try {
-        const value = evaluate(h.expr, app.evalOpts());
+        const value = app.runLine(h.expr).value;
         st.history.unshift({ expr: h.expr, value, angle: st.settings.angle, t: Date.now() });
         st.ans = value; app.save();
         app.setMode("calc");

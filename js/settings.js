@@ -8,6 +8,7 @@ const GROUPS = [
     { key: "frac", label: "Result style", sub: "Show exact fractions when a result is rational", opts: [["frac", "Fraction"], ["dec", "Decimal"]] },
     { key: "mixed", label: "Fraction form", opts: [[false, "Improper"], [true, "Mixed"]] },
     { key: "notation", label: "Number format", opts: [["normal", "Normal"], ["sci", "Scientific"], ["eng", "Engineering"]] },
+    { key: "complex", label: "Complex results", sub: "Real only: non-real answers are errors · a+bi · polar r(cos θ + i sin θ)", opts: [["real", "Real"], ["rect", "a+bi"], ["polar", "Polar"]] },
     { key: "digits", label: "Decimal places", type: "select", opts: [["float", "Float (auto)"], ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, String(n)])] },
   ] },
   { title: "Appearance", rows: [
@@ -52,7 +53,7 @@ export function createSettingsView(app) {
       <div class="set-row"><span class="lbl">Saved data<span class="sub">${storageAvailable() ? "History, memory, functions and settings are stored on this device." : "Storage is blocked — nothing will persist."}</span></span></div>
       <div class="set-row"><span class="lbl">Reset settings</span><button type="button" class="lcd-btn" data-act="reset-settings">Reset</button></div>
       <div class="set-row"><span class="lbl">Erase all data<span class="sub">History, memory, functions and settings</span></span><button type="button" class="lcd-btn danger" data-act="erase">Erase</button></div>
-    </div><div class="about">Graphing Calculator 2.0 · shortcuts: press <b>?</b> in the status bar</div>`;
+    </div><div class="about">Graphing Calculator 3.0 · shortcuts: press <b>?</b> in the status bar</div>`;
     root.innerHTML = html;
   }
 

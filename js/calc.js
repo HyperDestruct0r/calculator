@@ -1,7 +1,8 @@
 // CALC screen: transcript of previous calculations + live expression editor.
 import { el } from "./dom.js";
 import { Editor, textToTokens, textToDisplay } from "./editor.js";
-import { evaluate, compile } from "./engine.js";
+import { evaluate, mentionsX } from "./engine.js";
+import { parseAssignment } from "./parser.js";
 import { escapeHtml, numberToEntryText } from "./format.js";
 
 export function createCalcView(app) {
@@ -30,12 +31,14 @@ export function createCalcView(app) {
     msg.className = "preview res";
     const text = ed.text();
     if (!text.trim()) { msg.textContent = ""; return; }
-    try { msg.innerHTML = "= " + app.fmt(evaluate(text, app.evalOpts())).html; } catch { msg.textContent = ""; }
+    try {
+      const asg = parseAssignment(text);
+      msg.innerHTML = asg ? `${asg.name} ← ` + app.fmt(evaluate(asg.expr, app.evalOpts())).html : "= " + app.fmt(evaluate(text, app.evalOpts())).html;
+    } catch { msg.textContent = ""; }
   }
 
   function showError(e) {
-    let uses = false;
-    try { uses = compile(ed.text()).usesX; } catch { /* syntax error */ }
+    const uses = mentionsX(ed.text()) && !Object.prototype.hasOwnProperty.call(st.vars, "x");
     msg.className = "err";
     msg.innerHTML = `<span>${escapeHtml(e.message || "Error")}</span>` +
       (uses ? '<button type="button" class="lcd-btn" data-plot>Plot in Y=</button>' : "");
@@ -66,8 +69,9 @@ export function createCalcView(app) {
     app.setActive(ed);
   });
 
-  function commit(text, value) {
+  function commit(text, value, name) {
     st.history.unshift({ expr: text, value, angle: st.settings.angle, t: Date.now() });
+    if (name) app.toast(`${name} = ${app.fmt(value).text}`);
     if (st.history.length > 200) st.history.length = 200;
     st.ans = value;
     ed.setText("");
@@ -84,7 +88,7 @@ export function createCalcView(app) {
       const text = ed.text();
       if (!text.trim()) return;
       if (shift) { app.plotExpression(text); return; }
-      try { commit(text, evaluate(text, app.evalOpts())); }
+      try { const r = app.runLine(text); commit(text, r.value, r.kind === "assign" ? r.name : null); }
       catch (e) { showError(e); }
     },
     clearAll() { ed.clear(); msg.textContent = ""; recallIdx = -1; },
